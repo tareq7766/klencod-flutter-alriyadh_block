@@ -1,13 +1,15 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_theme.dart';
 import '../utils/constants.dart';
 import '../widgets/section_header.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
-
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -16,33 +18,38 @@ class _HomeScreenState extends State<HomeScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   Timer? _timer;
-
-  // تم تعديل الامتداد هنا ليكون jpg ليتطابق مع صورك
-  final List<String> _images = [
-    'assets/factory1.jpg',
-    'assets/factory2.jpg',
-    'assets/factory3.jpg',
-  ];
+  List<String> _images = [];
 
   @override
   void initState() {
     super.initState();
-    _startAutoPlay();
+    _loadImages();
+  }
+
+  Future<void> _loadImages() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('images_home_slider');
+    if (raw != null && raw.isNotEmpty) {
+      setState(() => _images = List<String>.from(jsonDecode(raw)));
+      _startAutoPlay();
+    } else {
+      // إذا لم يرفع المدير صوراً، تظهر صورة الأيقونة الافتراضية بصيغة jpg
+      setState(() => _images = ['assets/icon.jpg']); 
+    }
   }
 
   void _startAutoPlay() {
-    _timer = Timer.periodic(const Duration(seconds: 4), (Timer timer) {
+    _timer?.cancel();
+    if (_images.length <= 1) return;
+    _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (_currentPage < _images.length - 1) {
         _currentPage++;
       } else {
         _currentPage = 0;
       }
       if (_pageController.hasClients) {
-        _pageController.animateToPage(
-          _currentPage,
-          duration: const Duration(milliseconds: 800),
-          curve: Curves.easeInOut,
-        );
+        _pageController.animateToPage(_currentPage,
+            duration: const Duration(milliseconds: 800), curve: Curves.easeInOut);
       }
     });
   }
@@ -56,12 +63,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _launch(BuildContext context, Uri uri) async {
     try {
-      if (!await launchUrl(uri, mode: LaunchMode.externalApplication) && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر فتح الرابط')));
-      }
-    } catch (_) {
-      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('حدث خطأ')));
-    }
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {}
   }
 
   @override
@@ -71,62 +74,61 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. شريط الصور المتحرك
-          SizedBox(
-            height: 220, // زيادة الارتفاع قليلاً لتبدو الصور أجمل
-            child: Stack(
-              alignment: Alignment.bottomCenter,
-              children: [
-                PageView.builder(
-                  controller: _pageController,
-                  onPageChanged: (index) => setState(() => _currentPage = index),
-                  itemCount: _images.length,
-                  itemBuilder: (context, index) {
-                    return Image.asset(
-                      _images[index],
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      // في حال لم يتم رفع الصورة أو كان الاسم خطأ، تظهر خلفية رمادية بدلاً من خطأ
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: AppColors.primaryDark,
-                        child: const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.image_not_supported, color: Colors.white54, size: 50),
-                              SizedBox(height: 8),
-                              Text('الصورة غير متوفرة', style: TextStyle(color: Colors.white54)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                // النقاط السفلية للدلالة على الصفحة الحالية
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(_images.length, (index) {
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: _currentPage == index ? 20 : 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: _currentPage == index ? AppColors.accent : Colors.white54,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      );
-                    }),
+          if (_images.isNotEmpty)
+            SizedBox(
+              height: 220,
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (index) =>
+                        setState(() => _currentPage = index),
+                    itemCount: _images.length,
+                    itemBuilder: (context, index) {
+                      final isAsset = _images[index].startsWith('assets/');
+                      return isAsset
+                          ? Image.asset(_images[index],
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              errorBuilder: (_, __, ___) => Container(
+                                  color: AppColors.primaryDark,
+                                  child: const Icon(Icons.factory,
+                                      color: Colors.white54, size: 50)))
+                          : Image.file(File(_images[index]),
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              errorBuilder: (_, __, ___) => Container(
+                                  color: AppColors.primaryDark,
+                                  child: const Icon(Icons.factory,
+                                      color: Colors.white54, size: 50)));
+                    },
                   ),
-                ),
-              ],
+                  if (_images.length > 1)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(_images.length, (index) {
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            width: _currentPage == index ? 20 : 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                                color: _currentPage == index
+                                    ? AppColors.accent
+                                    : Colors.white54,
+                                borderRadius: BorderRadius.circular(4)),
+                          );
+                        }),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-          
-          // 2. الكارت الرئيسي (الشعار والأزرار)
+
+          // الكارت الرئيسي
           Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(20),
@@ -190,8 +192,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () => _launch(context,
-                            Uri.parse('https://wa.me/${AppConstants.whatsappNumber}')),
+                        onPressed: () => _launch(
+                            context,
+                            Uri.parse(
+                                'https://wa.me/${AppConstants.whatsappNumber}')),
                         icon: const Icon(Icons.chat_bubble, size: 20),
                         label: const Text('واتساب'),
                         style: ElevatedButton.styleFrom(
@@ -203,8 +207,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          
-          // 3. المميزات
+
+          // المميزات
           const SectionHeader(
               title: 'مميزاتنا',
               subtitle: 'لماذا يختارنا البناؤون؟',
@@ -240,7 +244,6 @@ class _FeatureItem extends StatelessWidget {
   final String desc;
   const _FeatureItem(
       {required this.icon, required this.title, required this.desc});
-
   @override
   Widget build(BuildContext context) {
     return Container(

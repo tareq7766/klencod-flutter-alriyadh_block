@@ -1,8 +1,31 @@
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_theme.dart';
 
-class AboutScreen extends StatelessWidget {
+class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
+  @override
+  State<AboutScreen> createState() => _AboutScreenState();
+}
+
+class _AboutScreenState extends State<AboutScreen> {
+  List<String> _images = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImages();
+  }
+
+  Future<void> _loadImages() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('images_factory_gallery');
+    if (raw != null && raw.isNotEmpty) {
+      setState(() => _images = List<String>.from(jsonDecode(raw)));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,21 +49,24 @@ class AboutScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20),
-        const Text('معرض الصور', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Text('معرض صور المصنع', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-          children: List.generate(4, (i) => Container(
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.grey.shade300)),
-            child: const Icon(Icons.image_outlined, color: Colors.grey, size: 40),
-          )),
-        ),
-        const SizedBox(height: 10),
-        const Text('سيتم إضافة صور المصنع والمنتجات قريباً.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.grey)),
+        if (_images.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+            child: const Text('سيتم إضافة صور المصنع قريباً من قبل الإدارة.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.2),
+            itemCount: _images.length,
+            itemBuilder: (context, index) {
+              return ClipRRect(borderRadius: BorderRadius.circular(14), child: Image.file(File(_images[index]), fit: BoxFit.cover));
+            },
+          ),
       ],
     );
   }
