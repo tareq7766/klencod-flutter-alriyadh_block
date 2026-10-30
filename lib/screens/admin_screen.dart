@@ -48,7 +48,6 @@ class _AdminScreenState extends State<AdminScreen> {
     return _buildDashboard();
   }
 
-  // 1. شاشة الدخول (بدون كشف الرمز)
   Widget _buildLoginScreen() {
     return Center(
       child: Padding(
@@ -83,7 +82,6 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 
-  // 2. لوحة التحكم الرئيسية
   Widget _buildDashboard() {
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -144,7 +142,6 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 
-  // 3. نافذة تغيير الرمز السري
   void _showChangePinDialog() {
     final pinController = TextEditingController();
     showDialog(
@@ -175,18 +172,15 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 
-  // 4. إدارة صور (الرئيسية أو المصنع)
   void _openImageManager(BuildContext context, String type) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => _ImageManagerScreen(type: type)));
   }
 
-  // 5. إدارة المنتجات
   void _openProductManager(BuildContext context) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const _ProductsManagerScreen()));
   }
 }
 
-// ---------- شاشة إدارة الصور (ديناميكية) ----------
 class _ImageManagerScreen extends StatefulWidget {
   final String type;
   const _ImageManagerScreen({required this.type});
@@ -196,7 +190,9 @@ class _ImageManagerScreen extends StatefulWidget {
 
 class _ImageManagerScreenState extends State<_ImageManagerScreen> {
   List<String> _images = [];
-  final String _key = 'images_${widget.type}';
+  
+  // التصحيح هنا: تحويلها إلى Getter
+  String get _key => 'images_${widget.type}'; 
 
   @override
   void initState() {
@@ -260,7 +256,6 @@ class _ImageManagerScreenState extends State<_ImageManagerScreen> {
   }
 }
 
-// ---------- شاشة إدارة المنتجات (نفس الكود السابق) ----------
 class _ProductsManagerScreen extends StatelessWidget {
   const _ProductsManagerScreen();
   @override
