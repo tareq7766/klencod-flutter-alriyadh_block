@@ -26,8 +26,8 @@ android {
     namespace "com.alriyadh.block"
     compileSdkVersion flutter.compileSdkVersion
     
-    // هذا هو السطر السحري الذي سيحل مشكلة البناء
-    ndkVersion = "27.0.12077973"
+    // تم تحديث إصدار NDK لحل مشكلة البناء
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -52,6 +52,7 @@ android {
 
     buildTypes {
         release {
+            // توقيع التطبيق (يمكنك تغييره لاحقاً بمفتاحك الخاص)
             signingConfig signingConfigs.debug
         }
     }

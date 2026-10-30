@@ -1,8 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- صلاحيات قراءة الصور من الهاتف -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
+    <!-- صلاحيات فتح الروابط (الواتساب، الخرائط، الاتصال) -->
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
@@ -21,7 +23,7 @@
     <application
         android:label="مصنع الرياض للبلك"
         android:name="${applicationName}"
-        android:icon="@mipmap/launcher_icon">
+        android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
             android:exported="true"
