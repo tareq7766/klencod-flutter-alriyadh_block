@@ -40,8 +40,8 @@ class AppTheme {
           color: Colors.white,
         ),
       ),
-      // التصحيح هنا: CardThemeData
-      cardTheme: CardThemeData(
+      // التصحيح: CardTheme وليس CardThemeData
+      cardTheme: CardTheme(
         color: AppColors.surface,
         elevation: 2,
         margin: EdgeInsets.zero,
