@@ -3,8 +3,8 @@ class Product {
   final String name;
   final String size;
   final String description;
-  final double? price; 
-  final String? imageUrl;
+  final double? price;
+  final String? imagePath;
 
   const Product({
     required this.id,
@@ -12,7 +12,7 @@ class Product {
     required this.size,
     required this.description,
     this.price,
-    this.imageUrl,
+    this.imagePath,
   });
 
   Map<String, dynamic> toJson() => {
@@ -21,7 +21,7 @@ class Product {
         'size': size,
         'description': description,
         'price': price,
-        'imageUrl': imageUrl,
+        'imagePath': imagePath,
       };
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
@@ -30,8 +30,8 @@ class Product {
         size: (json['size'] ?? '').toString(),
         description: (json['description'] ?? '').toString(),
         price: (json['price'] is num) ? (json['price'] as num).toDouble() : null,
-        imageUrl: (json['imageUrl'] as String?)?.trim().isEmpty ?? true
+        imagePath: (json['imagePath'] as String?)?.trim().isEmpty ?? true
             ? null
-            : json['imageUrl'] as String,
+            : json['imagePath'] as String,
       );
 }
